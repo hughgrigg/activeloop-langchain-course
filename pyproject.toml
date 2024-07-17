@@ -7,11 +7,11 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-langchain = "0.0.208"
-deeplake = "3.6.5"
-openai = "0.27.8"
-tiktoken = "0.4.0"
-selenium = "4.15.2"
+langchain = "^0.2.8"
+deeplake = "^3.9.13"
+openai = "^1.35.14"
+tiktoken = "^0.4.0"
+selenium = "^4.22.0"
 
 
 [build-system]
