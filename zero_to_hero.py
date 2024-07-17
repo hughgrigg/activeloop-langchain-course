@@ -58,7 +58,7 @@ def conversation_example():
     print(conversation)
 
 
-def deeplake_new_dataset_example():
+def deeplake_dataset_example():
     llm = OpenAI(model="gpt-3.5-turbo-instruct", temperature=0)
     embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 
@@ -101,8 +101,55 @@ def deeplake_new_dataset_example():
     print(response)
 
 
+def deeplake_existing_dataset_example():
+    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+
+    my_activeloop_org_id = os.environ["ACTIVELOOP_ORG_ID"]
+    my_activeloop_dataset_name = "langchain_course_from_zero_to_hero"
+    dataset_path = f"hub://{my_activeloop_org_id}/{my_activeloop_dataset_name}"
+
+    db = DeepLake(dataset_path=dataset_path, embedding_function=embeddings)
+
+    texts = [
+        "Lady Gaga was born in 28 March 1986",
+        "Michael Jeffrey Jordan was born in 17 February 1963",
+    ]
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    docs = text_splitter.create_documents(texts)
+
+    db.add_documents(docs)
+
+    llm = OpenAI(model="gpt-3.5-turbo-instruct", temperature=0)
+
+    retrieval_qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=db.as_retriever(),
+    )
+
+    tools = [
+        Tool(
+            name="Retrieval QA System",
+            func=retrieval_qa.run,
+            description="Useful for answering questions.",
+        ),
+    ]
+
+    agent = initialize_agent(
+        tools,
+        llm,
+        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
+    )
+
+    response = agent.run("When was Michael Jordan born?")
+
+    print(response)
+
+
 if __name__ == "__main__":
     # direct_llm_example()
     # prompt_template_example()
     # conversation_example()
-    deeplake_new_dataset_example()
+    # deeplake_new_dataset_example()
+    deeplake_existing_dataset_example()
