@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "langchain-course"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+langchain = "0.0.208"
+deeplake = "3.6.5"
+openai = "0.27.8"
+tiktoken = "0.4.0"
+selenium = "4.15.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
