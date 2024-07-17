@@ -1,8 +1,23 @@
+"""
+Requires the following env vars:
+ - OPENAI_API_KEY
+ - ACTIVELOOP_TOKEN
+ - ACTIVELOOP_ORG_ID
+"""
+
+import os
+
+from langchain.agents import AgentType
+from langchain.agents import initialize_agent, Tool
 from langchain.chains import ConversationChain
 from langchain.chains import LLMChain
+from langchain.chains import RetrievalQA
+from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import DeepLake
 
 
 def direct_llm_example():
@@ -43,7 +58,51 @@ def conversation_example():
     print(conversation)
 
 
+def deeplake_new_dataset_example():
+    llm = OpenAI(model="gpt-3.5-turbo-instruct", temperature=0)
+    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+
+    texts = [
+        "Napoleon Bonaparte was born in 15 August 1769",
+        "Louis XIV was born in 5 September 1638",
+    ]
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    docs = text_splitter.create_documents(texts)
+
+    my_activeloop_org_id = os.environ["ACTIVELOOP_ORG_ID"]
+    my_activeloop_dataset_name = "langchain_course_from_zero_to_hero"
+    dataset_path = f"hub://{my_activeloop_org_id}/{my_activeloop_dataset_name}"
+    db = DeepLake(dataset_path=dataset_path, embedding_function=embeddings)
+
+    db.add_documents(docs)
+
+    retrieval_qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=db.as_retriever(),
+    )
+
+    tools = [
+        Tool(
+            name="Retrieval QA System",
+            func=retrieval_qa.run,
+            description="Useful for answering questions.",
+        ),
+    ]
+
+    agent = initialize_agent(
+        tools,
+        llm,
+        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
+    )
+
+    response = agent.run("When was Napoleon born?")
+    print(response)
+
+
 if __name__ == "__main__":
     # direct_llm_example()
     # prompt_template_example()
-    conversation_example()
+    # conversation_example()
+    deeplake_new_dataset_example()
